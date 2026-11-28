@@ -1,18 +1,12 @@
 #pragma once
 
-// Минимальная математика для лабораторной. Никаких зависимостей.
-//
-// ВАЖНО: матрица хранится ПО СТОЛБЦАМ: m[столбец][строка].
-// Именно так хранит mat4 GLSL, поэтому массив можно копировать в uniform-буфер
-// через memcpy без транспонирования.
-
 #include <cmath>
 #include <cstring>
 
 namespace cyl {
 
     struct Mat4 {
-        float m[4][4]; // m[столбец][строка]
+        float m[4][4]; // m[column][row]
     };
 
     inline Mat4 identity() {
@@ -77,7 +71,7 @@ namespace cyl {
         r.m[0][0] = 1.0f / (aspect * t);
         r.m[1][1] = -1.0f / t;
         r.m[2][2] = far_z / (far_z - near_z);
-        r.m[2][3] = 1.0f;                                   
+        r.m[2][3] = 1.0f;
         r.m[3][2] = -far_z * near_z / (far_z - near_z);
         return r;
     }
@@ -86,12 +80,33 @@ namespace cyl {
         float near_z, float far_z) {
         Mat4 r = identity();
         r.m[0][0] = 2.0f / (right - left);
-        r.m[1][1] = -2.0f / (top - bottom);                
+        r.m[1][1] = -2.0f / (top - bottom);
         r.m[2][2] = 1.0f / (far_z - near_z);
         r.m[3][0] = -(right + left) / (right - left);
         r.m[3][1] = (top + bottom) / (top - bottom);
         r.m[3][2] = -near_z / (far_z - near_z);
         return r;
+    }
+
+    struct Vec3 {
+        float x, y, z;
+    };
+
+    inline Vec3 vadd(Vec3 a, Vec3 b) { return { a.x + b.x, a.y + b.y, a.z + b.z }; }
+    inline Vec3 vsub(Vec3 a, Vec3 b) { return { a.x - b.x, a.y - b.y, a.z - b.z }; }
+    inline Vec3 vscale(Vec3 a, float s) { return { a.x * s, a.y * s, a.z * s }; }
+    inline float vdot(Vec3 a, Vec3 b) { return a.x * b.x + a.y * b.y + a.z * b.z; }
+    inline float vlength(Vec3 a) { return std::sqrt(vdot(a, a)); }
+    inline Vec3 vcross(Vec3 a, Vec3 b) {
+        return { a.y * b.z - a.z * b.y,
+                 a.z * b.x - a.x * b.z,
+                 a.x * b.y - a.y * b.x };
+    }
+
+    inline Vec3 vnormalize(Vec3 a) {
+        float len = vlength(a);
+        if (len < 1e-6f) return { 0.0f, 0.0f, 0.0f };
+        return vscale(a, 1.0f / len);
     }
 
 } // namespace cyl
